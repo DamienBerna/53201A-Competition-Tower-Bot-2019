@@ -36,11 +36,6 @@ void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
 
-  BackLeftDriveMotor.stop(hold);
-  FrontLeftDriveMotor.stop(hold);
-  BackRightDriveMotor.stop(hold);
-  FrontRightDriveMotor.stop(hold);
-
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
 }
@@ -56,34 +51,7 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-  RallUpDown.spin(reverse, 100, rpm); //Calibrate and filp out rail
-  wait(1800, msec);
-  RallUpDown.setRotation(99, degrees);
   
-  IntakeRollerUpDown.rotateTo(-900, degrees, 100, rpm); //Filp out arms
-
-  RallUpDown.rotateTo(325, degrees, 50, rpm, false); //Home rall
-  IntakeRollerUpDown.rotateTo(-750, degrees, 100, rpm); //Home arms
-
-  RightIntakeRoller.spin(reverse, 200, rpm); //Start rollers
-  LeftIntakeRoller.spin(forward, 200, rpm);
-  
-  BackLeftDriveMotor.rotateTo(666, degrees, 100, rpm, false); //Forward to cubes
-  FrontLeftDriveMotor.rotateTo(-666, degrees, 100, rpm, false);
-  BackRightDriveMotor.rotateTo(-666, degrees, 100, rpm, false);
-  FrontRightDriveMotor.rotateTo(666, degrees, 100, rpm);
-
-  BackLeftDriveMotor.rotateTo(952, degrees, 50, rpm, false); //Forward slow to stacked cubes
-  FrontLeftDriveMotor.rotateTo(-952, degrees, 50, rpm, false);
-  BackRightDriveMotor.rotateTo(-952, degrees, 50, rpm, false);
-  FrontRightDriveMotor.rotateTo(952, degrees, 50, rpm);  
-  
-  BackLeftDriveMotor.stop(coast); //Stop all motors to prepare for operator control 
-  FrontLeftDriveMotor.stop(coast);
-  BackRightDriveMotor.stop(coast);
-  FrontRightDriveMotor.stop(coast);
-  RightIntakeRoller.stop();
-  LeftIntakeRoller.stop();
 }
 
 /*---------------------------------------------------------------------------*/
@@ -98,6 +66,7 @@ void autonomous(void) {
 
 //Tasks
 
+/*
 int autoCubePlace() {
   while (true) {
     
@@ -141,7 +110,7 @@ int arm() {
     wait(10, msec);
   }
   return 0;
-}
+}*/
 
 bool diverAnalogRollerControl = false;
 
@@ -183,18 +152,27 @@ void usercontrol(void) {
   bool operatorJoystickAxis3Disable = true;
   bool operatorJoystickAxis4Disable = true;
 
+  double Liftkp = 0.7;//Mecanum Wheel val:0.75
+  double Liftki = 0.0001;//Mecanum Wheel val:0.0001
+  double Liftkd = 5;//Mecanum Wheel val:5
+  int Lifterror;
+  int Liftintegral;
+  int Liftderivative;
+  int LiftPIDOut;
+  int LiftLastError;
+
   //bool operatorDisable = false;
   //bool driverDisable = false;
 
-  task arms = task(arm);
+  //task arms = task(arm);
   
   // User control code here, inside the loop
   while (1) {
     //Dead zone check
     //Driver Joystick Axis 1
-    if (abs (DriverController.Axis1.value()) > 5) {
+    if (abs (driverController.Axis1.value()) > 5) {
       driverJoystickAxis1Disable = false;
-      driverJoystickAxis1 = DriverController.Axis1.value();
+      driverJoystickAxis1 = driverController.Axis1.value();
     }
     else {
       driverJoystickAxis1 = 0;
@@ -202,9 +180,9 @@ void usercontrol(void) {
     }
 
     //Driver Joystick Axis 2
-    if (abs (DriverController.Axis2.value()) > 5) {
+    if (abs (driverController.Axis2.value()) > 5) {
       driverJoystickAxis2Disable = false;
-      driverJoystickAxis2 = DriverController.Axis2.value();
+      driverJoystickAxis2 = driverController.Axis2.value();
     }
     else {
       driverJoystickAxis2 = 0;
@@ -212,9 +190,9 @@ void usercontrol(void) {
     }
 
     //Driver Joystick Axis 3
-    if (abs (DriverController.Axis3.value()) > 5) {
+    if (abs (driverController.Axis3.value()) > 5) {
       driverJoystickAxis3Disable = false;
-      driverJoystickAxis3 = DriverController.Axis3.value();
+      driverJoystickAxis3 = driverController.Axis3.value();
     }
     else {
       driverJoystickAxis3 = 0;
@@ -222,9 +200,9 @@ void usercontrol(void) {
     }
 
     //Driver Joystick Axis 4
-    if (abs (DriverController.Axis4.value()) > 5) {
+    if (abs (driverController.Axis4.value()) > 5) {
       driverJoystickAxis4Disable = false;
-      driverJoystickAxis4 = DriverController.Axis4.value();
+      driverJoystickAxis4 = driverController.Axis4.value();
     }
     else {
       driverJoystickAxis4 = 0;
@@ -232,9 +210,9 @@ void usercontrol(void) {
     }
 
     //Operator Joystick Axis 1
-    if (abs (OperatorController.Axis1.value()) > 5) {
+    if (abs (operatorController.Axis1.value()) > 5) {
       operatorJoystickAxis1Disable = false;
-      operatorJoystickAxis1 = OperatorController.Axis1.value();
+      operatorJoystickAxis1 = operatorController.Axis1.value();
     }
     else {
       operatorJoystickAxis1 = 0;
@@ -242,9 +220,9 @@ void usercontrol(void) {
     }
 
     //Operator Joystick Axis 2
-    if (abs (OperatorController.Axis2.value()) > 5) {
+    if (abs (operatorController.Axis2.value()) > 5) {
       operatorJoystickAxis2Disable = false;
-      operatorJoystickAxis2 = OperatorController.Axis2.value();
+      operatorJoystickAxis2 = operatorController.Axis2.value();
     }
     else {
       operatorJoystickAxis2 = 0;
@@ -252,9 +230,9 @@ void usercontrol(void) {
     }
 
     //Operator Joystick Axis 3
-    if (abs (OperatorController.Axis3.value()) > 5) {
+    if (abs (operatorController.Axis3.value()) > 5) {
       operatorJoystickAxis3Disable = false;
-      operatorJoystickAxis3 = OperatorController.Axis3.value();
+      operatorJoystickAxis3 = operatorController.Axis3.value();
     }
     else {
       operatorJoystickAxis3 = 0;
@@ -262,9 +240,9 @@ void usercontrol(void) {
     }
 
     //Operator Joystick Axis 4
-    if (abs (OperatorController.Axis4.value()) > 5) {
+    if (abs (operatorController.Axis4.value()) > 5) {
       operatorJoystickAxis4Disable = false;
-      operatorJoystickAxis4 = OperatorController.Axis4.value();
+      operatorJoystickAxis4 = operatorController.Axis4.value();
     }
     else {
       operatorJoystickAxis4 = 0;
@@ -272,102 +250,38 @@ void usercontrol(void) {
     }
 
     //Drive
-
-    DriverController.ButtonA.pressed( driverRollerToggle );
-
-    if (diverAnalogRollerControl == true) {
-      FrontLeftDriveMotor.spin(reverse, (driverJoystickAxis3 + driverJoystickAxis4), percent);
-      BackLeftDriveMotor.spin(reverse, (-driverJoystickAxis3 + driverJoystickAxis4), percent);
-      FrontRightDriveMotor.spin(forward, (driverJoystickAxis3 - driverJoystickAxis4), percent);
-      BackRightDriveMotor.spin(forward, (-driverJoystickAxis3 - driverJoystickAxis4), percent);
-    }
-    else {
-      FrontLeftDriveMotor.spin(reverse, (driverJoystickAxis3 + driverJoystickAxis4 + driverJoystickAxis1), percent);
-      BackLeftDriveMotor.spin(reverse, (-driverJoystickAxis3 + driverJoystickAxis4 - driverJoystickAxis1), percent);
-      FrontRightDriveMotor.spin(forward, (driverJoystickAxis3 - driverJoystickAxis4 - driverJoystickAxis1), percent);
-      BackRightDriveMotor.spin(forward, (-driverJoystickAxis3 - driverJoystickAxis4 + driverJoystickAxis1), percent);
-    }
-    
-    //Rail
-    if (operatorJoystickAxis3Disable == false) {
-      RallUpDown.spin(forward, (-operatorJoystickAxis3 / 4), percent);
-    }
-    else {
-      RallUpDown.stop(hold);
-    }
+    leftDriveMotor1.spin(forward, (driverJoystickAxis3 + driverJoystickAxis1), percent);
+    leftDriveMotor2.spin(forward, (driverJoystickAxis3 + driverJoystickAxis1), percent);
+    rightDriveMotor1.spin(forward, (driverJoystickAxis3 - driverJoystickAxis1), percent);
+    rightDriveMotor1.spin(forward, (driverJoystickAxis3 - driverJoystickAxis1), percent);
 
     //Rollers
-    if (OperatorController.ButtonR1.pressing()) {
-      RightIntakeRoller.spin(forward, 200, rpm);
-      LeftIntakeRoller.spin(reverse, 200, rpm);
+    if (driverController.ButtonR1.pressing()) {
+      leftIntakeRoller.spin(forward, 200, rpm);
+      rightIntakeRoller.spin(reverse, 200, rpm);
     }
-    else if (OperatorController.ButtonR2.pressing()) {
-      RightIntakeRoller.spin(reverse, 200, rpm);
-      LeftIntakeRoller.spin(forward, 200, rpm);
-    }
-    else {
-      RightIntakeRoller.stop();
-      LeftIntakeRoller.stop();
-    }
-    /*DriverController.ButtonR1.pressed( rollerInToggle );
-    DriverController.ButtonR2.pressed( rollerOutToggle );
-    if (rollerOutOnOff == true) {
-      RightIntakeRoller.spin(reverse, 200, rpm);
-      LeftIntakeRoller.spin(forward, 200, rpm);
-    }
-    if (rollerInOnOff == true) {
-      RightIntakeRoller.spin(forward, 200, rpm);
-      LeftIntakeRoller.spin(reverse, 200, rpm);
-    }
-    else if (diverAnalogRollerControl) {
-      RightIntakeRoller.spin(forward, driverJoystickAxis2, percent);
-      LeftIntakeRoller.spin(reverse, driverJoystickAxis2, percent);
-    }*/
-
-
-/*
-    if (abs (DriverController.Axis2.value()) > 5) {
-      driverJoystickAxis2Disable = false;
-      driverJoystickAxis2 = DriverController.Axis2.value();
+    else if (driverController.ButtonR2.pressing()) {
+      leftIntakeRoller.spin(reverse, 200, rpm);
+      rightIntakeRoller.spin(forward, 200, rpm);
     }
     else {
-      driverJoystickAxis2 = 0;
-      driverJoystickAxis2Disable = true;
+      leftIntakeRoller.stop();
+      rightIntakeRoller.stop();
     }
-    */
 
-/*    void deadZoneCheck()
-{
+    //Lift
+    if (operatorController.ButtonL2.pressing()) {
+      leftLiftMotor.spin(forward, operatorJoystickAxis2, percent);
+      rightLiftMotor.spin(forward, operatorJoystickAxis2, percent);
+    }
+    else {
+      Liftintegral = Liftintegral + Lifterror;
+      Liftderivative = Lifterror - LiftLastError;
+      LiftPIDOut = (Liftkp * Lifterror) + (Liftki * Liftintegral) + (Liftkd * Liftderivative);
+      LiftLastError = Lifterror;
+    }
 
-	if(abs(vexRT[Ch2]) > threshold)
-		Channel2 = vexRT[Ch2];
-	else
-		Channel2 = 0;
-
-	if(abs(vexRT[Ch3]) > threshold)
-		Channel3 = vexRT[Ch3];
-	else
-		Channel3 = 0;
-}*/
-
-    /*if(OperatorController.ButtonL2.pressing()){
-        IntakeRollerUpDown.spin(directionType::fwd,100,velocityUnits::rpm);
-      }else if (OperatorController.ButtonL1.pressing()) {
-        IntakeRollerUpDown.spin(directionType::rev,100,velocityUnits::rpm);
-      }else{
-        IntakeRollerUpDown.stop(brakeType::hold);
-      }*/
-    // This is the main execution loop for the user control program.
-    // Each time through the loop your program should update motor + servo
-    // values based on feedback from the joysticks.
-
-    // ........................................................................
-    // Insert user code here. This is where you use the joystick values to
-    // update your motors, etc.
-    // ........................................................................
-
-    wait(5, msec); // Sleep the task for a short amount of time to
-                    // prevent wasted resources.
+    wait(5, msec);
   }
 }
 

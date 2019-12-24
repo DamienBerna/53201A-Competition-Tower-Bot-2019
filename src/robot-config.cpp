@@ -8,17 +8,18 @@ using code = vision::code;
 brain  Brain;
 
 // VEXcode device constructors
-controller DriverController = controller(primary);
-controller OperatorController = controller(partner);
-motor BackLeftDriveMotor = motor(PORT19, ratio18_1, false);
-motor FrontLeftDriveMotor = motor(PORT18, ratio18_1, false);
-motor BackRightDriveMotor = motor(PORT11, ratio18_1, false);
-motor FrontRightDriveMotor = motor(PORT12, ratio18_1, false);
-motor RightIntakeRoller = motor(PORT13, ratio18_1, false);
-motor LeftIntakeRoller = motor(PORT16, ratio18_1, false);
-motor IntakeRollerUpDown = motor(PORT14, ratio36_1, false);
-motor RallUpDown = motor(PORT20, ratio36_1, false);
-gyro Gyro = gyro(Brain.ThreeWirePort.A);
+controller driverController = controller(primary);
+controller operatorController = controller(partner);
+motor leftDriveMotor1 = motor(PORT10, ratio18_1, false);
+motor leftDriveMotor2 = motor(PORT9, ratio18_1, true);
+motor rightDriveMotor1 = motor(PORT1, ratio18_1, true);
+motor rightDriveMotor2 = motor(PORT2, ratio18_1, false);
+motor leftIntakeRoller = motor(PORT7, ratio18_1, false);
+motor rightIntakeRoller = motor(PORT4, ratio18_1, true);
+motor leftLiftMotor = motor(PORT8, ratio18_1, false);
+motor rightLiftMotor = motor(PORT3, ratio18_1, false);
+pot leftLiftPot = pot(Brain.ThreeWirePort.G);
+pot rightLiftPot = pot(Brain.ThreeWirePort.H);
 
 // VEXcode generated functions
 
